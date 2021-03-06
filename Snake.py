@@ -68,10 +68,6 @@ class Snake:
         elif tail_relation==Vector2(1,0): self.tail = self.tail_left
         elif tail_relation==Vector2(0,-1): self.tail = self.tail_down
         elif tail_relation==Vector2(0,1): self.tail = self.tail_up
-        # for block in self.body:
-        #     xpos=int(block.x*cell_size)
-        #     ypos=int(block.y*cell_size)
-        #     block_rect=pygame.Rect(xpos,ypos,cell_size,cell_size)
 
     def moveSnake(self):
         if self.new_block==True:
