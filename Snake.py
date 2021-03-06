@@ -4,9 +4,11 @@ from pygame.math import Vector2
 class Snake:
     def __init__(self):
         self.body=[Vector2(5,10),Vector2(4,10),Vector2(3,10)]
-        self.direction=Vector2(1,0)
+        self.direction=Vector2(0,0)
         self.new_block=False
 
+        #Loading Images for snake's movements
+        
         self.head_up=pygame.image.load('Graphics/head_up.png').convert_alpha()
         self.head_down=pygame.image.load('Graphics/head_down.png').convert_alpha()
         self.head_right=pygame.image.load('Graphics/head_right.png').convert_alpha()
@@ -25,7 +27,11 @@ class Snake:
         self.body_br=pygame.image.load('Graphics/body_br.png').convert_alpha()
         self.body_bl=pygame.image.load('Graphics/body_bl.png').convert_alpha()
 
+        #Loading Munching Sound
+        self.crunch_sound=pygame.mixer.Sound('Sound/crunch.wav')
+
     def drawSnake(self):
+        #calling functions to update the snake graphics
         self.update_head_graphics()
         self.update_tail_graphics()
 
@@ -83,6 +89,9 @@ class Snake:
     def add_block(self):
         self.new_block=True
 
+    def reset(self):
+        self.body=[Vector2(5,10),Vector2(4,10),Vector2(3,10)]
+        self.direction=Vector2(0,0)
 
 class Fruit:
     def __init__(self):
@@ -91,7 +100,6 @@ class Fruit:
     def drawFruit(self):
         fruit_rect=pygame.Rect(int(self.pos.x*cell_size),int(self.pos.y*cell_size),cell_size,cell_size)
         screen.blit(apple,fruit_rect)
-        #pygame.draw.rect(screen,(126,166,144),fruit_rect)
 
     def randomise(self):
         self.x=random.randint(0,cell_number-1)
@@ -102,6 +110,8 @@ class Main:
     def __init__(self):
         self.snake=Snake()
         self.fruit=Fruit()
+        pygame.mixer.music.load('Sound/bg_music.mp3')
+        pygame.mixer.music.play(-1,1.0)
 
     def update(self):
         self.snake.moveSnake()
@@ -109,13 +119,21 @@ class Main:
         self.check_fail()
 
     def draw_elements(self):
+        self.draw_grass()
         self.fruit.drawFruit()
         self.snake.drawSnake()
+        self.draw_score()
 
     def check_collision(self):
         if self.fruit.pos== self.snake.body[0]:
             self.fruit.randomise()
             self.snake.add_block()
+            self.snake.crunch_sound.play()
+
+        # redraw fruit at different location if it appeared at body of the snake
+        for block in self.snake.body[1:]:
+            if block == self.fruit.pos:
+                self.fruit.randomise()
 
     def check_fail(self):
         if not 0 <= self.snake.body[0].x < cell_number:
@@ -127,8 +145,36 @@ class Main:
                 self.gameOver()
 
     def gameOver(self):
-        pygame.quit()
+        self.snake.reset()
 
+    def draw_grass(self):
+        grass_color = (167,209,61)
+        for row in range(cell_number):
+            for col in range(cell_number):
+                if row%2==0:
+                    if col%2==1:
+                        grass_rect=pygame.Rect(col*cell_size,row*cell_size,cell_size,cell_size)
+                        pygame.draw.rect(screen,grass_color,grass_rect)
+                else:
+                    if col%2==0:
+                        grass_rect=pygame.Rect(col*cell_size,row*cell_size,cell_size,cell_size)
+                        pygame.draw.rect(screen,grass_color,grass_rect)
+
+    def draw_score(self):
+        score_text= str(len(self.snake.body)-3)
+        score_surface= game_font.render(score_text,True,(56,74,12))
+        score_x=int(cell_size*cell_number)-60
+        score_y=40
+        score_rect=score_surface.get_rect(center=(score_x,score_y))
+        apple_rect=apple.get_rect(midright=(score_rect.left-2,score_rect.centery))
+        bg_rect=pygame.Rect(apple_rect.left-4,apple_rect.top-2,apple_rect.width + 10 + score_rect.width,apple_rect.height+4)
+
+        pygame.draw.rect(screen,(167,209,61),bg_rect)
+        screen.blit(score_surface,score_rect)
+        screen.blit(apple,apple_rect)
+        pygame.draw.rect(screen,(56,74,12),bg_rect,2)
+
+pygame.mixer.pre_init(44100,-16,2,512)
 pygame.init()
 cell_size=40
 cell_number=20
@@ -137,6 +183,7 @@ screen = pygame.display.set_mode((cell_number*cell_size,cell_number*cell_size),0
 pygame.display.set_caption("Snake")
 
 apple=pygame.image.load('Graphics/apple2.png').convert_alpha()
+game_font= pygame.font.Font('Font/PoetsenOne-Regular.ttf', 25)
 
 SCREEN_UPDATE=pygame.USEREVENT
 pygame.time.set_timer(SCREEN_UPDATE,150)
