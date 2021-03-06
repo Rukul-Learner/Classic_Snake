@@ -1,1 +1,0 @@
-This project has helped me to learn a lot about pygame and python. Thanks to clear code for providing such great tutorial.
